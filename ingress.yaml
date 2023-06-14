@@ -1,13 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: name
+  name: mongo-express-ingress
   namespace: p0-namespace
   annotations:
     kubernetes.io/ingress.class: nginx
+
 spec:
   rules:
-    - host: rrr.com
+    - host: mongo.com
       http:
         paths:
           - path: /
@@ -17,11 +18,77 @@ spec:
                 name: mongo-express-service
                 port:
                   number: 8081
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: p0-monitoring
+  annotations:
+    kubernetes.io/ingress.class: nginx
+
+spec:
+  rules:
+    - host: prometheus.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-grafana
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: p0-app-ingress
+  namespace: p0-namespace
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+spec:
+  rules:
+    - host: rrr.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: p0-ui-service
+                port:
+                  number: 8080
           - path: /api/users
             pathType: Prefix
             backend:
               service:
                 name: p0-auth-service
+                port:
+                  number: 8080
+          - path: /api/transports
+            pathType: Prefix
+            backend:
+              service:
+                name: p0-transports-service
+                port:
+                  number: 8080
+          - path: /api/transactions
+            pathType: Prefix
+            backend:
+              service:
+                name: p0-transactions-service
+                port:
+                  number: 8080
+          - path: /ws/ # Calea pentru WebSocket
+            pathType: Prefix
+            backend:
+              service:
+                name: p0-transactions-service
                 port:
                   number: 8080
 # ---
